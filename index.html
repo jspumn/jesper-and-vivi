@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Jesper &amp; Vivi 的行事曆</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --surface:#FAFAF7;
+    --ink:#171715;
+    --ink-soft:#8C8A7E;
+    --line:#E8E6DC;
+    --jesper:#3D5A80;
+    --vivi:#B5566B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter','Noto Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:48px 20px 72px;}
+
+  header{margin-bottom:28px;}
+  h1{
+    font-family:'Space Grotesk','Noto Sans TC',sans-serif;
+    font-size:28px;font-weight:700;margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  .subtitle{margin:0;color:var(--ink-soft);font-size:14px;}
+
+  .legend{display:flex;gap:10px;margin-bottom:6px;}
+  .person-toggle{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 14px 8px 8px;border-radius:999px;
+    border:1px solid var(--line);background:var(--bg);
+    font-family:'Inter','Noto Sans TC',sans-serif;
+    font-size:13px;font-weight:500;color:var(--ink);
+    cursor:pointer;transition:border-color .15s,opacity .15s;
+  }
+  .person-toggle:hover{border-color:var(--ink-soft);}
+  .person-toggle[aria-pressed="false"]{opacity:.4;}
+  .avatar{width:24px;height:24px;flex-shrink:0;}
+  .legend-hint{margin:10px 0 30px;font-size:12px;color:var(--ink-soft);}
+
+  .month{margin-bottom:36px;}
+  .month h2{
+    font-family:'Space Grotesk','Noto Sans TC',sans-serif;
+    font-size:15px;font-weight:500;margin:0 0 12px;
+    letter-spacing:.02em;
+  }
+  .weekdays{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    margin-bottom:4px;
+  }
+  .weekdays span{
+    text-align:center;font-size:11px;color:var(--ink-soft);
+    padding-bottom:6px;
+  }
+  .grid{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    gap:1px;background:var(--line);
+    border:1px solid var(--line);
+  }
+  .day{
+    position:relative;background:var(--bg);
+    aspect-ratio:1;padding:6px;
+  }
+  .day.pad{background:var(--surface);}
+  .day .num{
+    font-family:'Space Grotesk',monospace;
+    font-size:11px;color:var(--ink-soft);
+  }
+  .day.today .num{color:var(--ink);font-weight:700;}
+  .day.today::after{
+    content:"";position:absolute;top:6px;left:19px;
+    width:3px;height:3px;border-radius:50%;background:var(--ink);
+  }
+  .day.flight{cursor:pointer;}
+  .day.flight:hover{background:var(--surface);}
+  .day.flight.active{box-shadow:inset 0 0 0 2px var(--ink);}
+  .day .avatars{
+    position:absolute;top:4px;right:4px;
+    display:flex;gap:2px;
+  }
+  .day .avatars svg{width:14px;height:14px;}
+  .bars{
+    position:absolute;left:6px;right:6px;bottom:6px;
+    display:flex;flex-direction:column;gap:2px;
+  }
+  .bar{height:3px;border-radius:2px;}
+  .bar.jesper{background:var(--jesper);opacity:.2;}
+  .bar.jesper.abroad{opacity:1;}
+  .bar.vivi{background:var(--vivi);opacity:.2;}
+  .bar.vivi.abroad{opacity:1;}
+
+  body.filter-jesper .bar.vivi,
+  body.filter-jesper .avatars svg.vivi-icon{opacity:.1 !important;}
+  body.filter-vivi .bar.jesper,
+  body.filter-vivi .avatars svg.jesper-icon{opacity:.1 !important;}
+
+  .detail{
+    margin-top:24px;border:1px solid var(--line);
+    border-radius:10px;padding:20px;
+    display:none;
+  }
+  .detail.open{display:block;}
+  .detail-top{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:14px;
+  }
+  .detail-route{
+    font-family:'Space Grotesk',monospace;
+    font-size:20px;font-weight:700;
+  }
+  .detail-route .sep{color:var(--ink-soft);font-weight:400;font-size:14px;margin:0 6px;}
+  .detail-close{
+    border:none;background:none;color:var(--ink-soft);
+    font-size:16px;cursor:pointer;line-height:1;padding:2px;
+  }
+  .detail-close:hover{color:var(--ink);}
+  .detail-tag{
+    display:inline-block;font-size:11px;font-weight:500;
+    padding:2px 8px;border-radius:999px;margin-bottom:12px;
+  }
+  .detail-tag.confirmed{background:#E9F1EC;color:#2F6B4F;}
+  .detail-tag.estimated{background:#F4ECDD;color:#9C6B1F;}
+  .detail-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;
+    font-size:13px;margin-bottom:12px;
+  }
+  .detail-grid label{display:block;color:var(--ink-soft);font-size:11px;margin-bottom:2px;}
+  .detail-people{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  .detail-people .avatar{width:20px;height:20px;}
+  .detail-note{font-size:13px;color:var(--ink-soft);margin:0;}
+
+  footer{
+    margin-top:40px;padding-top:20px;border-top:1px dashed var(--line);
+    font-size:12px;color:var(--ink-soft);
+  }
+
+  @media (prefers-reduced-motion:no-preference){
+    .month{animation:fade .5s ease both;}
+    .month:nth-of-type(2){animation-delay:.08s;}
+    @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Jesper &amp; Vivi</h1>
+    <p class="subtitle">2026 年 8 – 9 月 · 明尼蘇達（MSP）⇄ 倫敦（LHR）</p>
+  </header>
+
+  <div class="legend">
+    <button class="person-toggle" id="toggle-jesper" data-person="jesper" aria-pressed="true">
+      <span class="avatar" id="avatar-jesper-legend"></span>
+      Jesper
+    </button>
+    <button class="person-toggle" id="toggle-vivi" data-person="vivi" aria-pressed="true">
+      <span class="avatar" id="avatar-vivi-legend"></span>
+      Vivi
+    </button>
+  </div>
+  <p class="legend-hint">點頭像只看那個人的行蹤，再點一次恢復。色塊深色 = 人在英國，淺色 = 人在美國。點有頭像的日期看航班細節。</p>
+
+  <section class="month">
+    <h2>August 2026</h2>
+    <div class="weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="grid" id="grid-aug"></div>
+  </section>
+
+  <section class="month">
+    <h2>September 2026</h2>
+    <div class="weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="grid" id="grid-sep"></div>
+  </section>
+
+  <div class="detail" id="detail">
+    <div class="detail-top">
+      <div class="detail-route" id="detail-route"></div>
+      <button class="detail-close" id="detail-close" aria-label="關閉">✕</button>
+    </div>
+    <div id="detail-tag"></div>
+    <div class="detail-people" id="detail-people"></div>
+    <div class="detail-grid" id="detail-grid"></div>
+    <p class="detail-note" id="detail-note"></p>
+  </div>
+
+  <footer>
+    標示「已確認」的航段取自訂位確認信；標示「推算」的航段是依 Delta 目前公開班表查得，尚未對應到實際訂位，出發前建議再用 PNR 核對一次。
+  </footer>
+
+</div>
+
+<script>
+function jesperIcon(cls){
+  return '<svg class="'+(cls||'')+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+    '<circle cx="12" cy="12" r="10" fill="#3D5A80"/>'+
+    '<circle cx="8.5" cy="12" r="2.6" fill="none" stroke="#FFFFFF" stroke-width="1.1"/>'+
+    '<circle cx="15.5" cy="12" r="2.6" fill="none" stroke="#FFFFFF" stroke-width="1.1"/>'+
+    '<line x1="11.1" y1="12" x2="12.9" y2="12" stroke="#FFFFFF" stroke-width="1.1"/>'+
+    '<path d="M15 16.2c-1 .7-4 .7-5 0" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" fill="none"/>'+
+  '</svg>';
+}
+function viviIcon(cls){
+  return '<svg class="'+(cls||'')+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+    '<circle cx="12" cy="12" r="10" fill="#B5566B"/>'+
+    '<circle cx="9" cy="11.5" r="1" fill="#FFFFFF"/>'+
+    '<circle cx="15" cy="11.5" r="1" fill="#FFFFFF"/>'+
+    '<path d="M9 15c1 .9 5 .9 6 0" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" fill="none"/>'+
+    '<path d="M12 4.2 9.6 7h4.8z" fill="#FFFFFF"/>'+
+  '</svg>';
+}
+document.getElementById('avatar-jesper-legend').innerHTML = jesperIcon();
+document.getElementById('avatar-vivi-legend').innerHTML = viviIcon();
+
+const flights = {
+  '2026-08-22': {route:['MSP','LHR'], people:['jesper'], flightNo:'DL10', dep:'23:05 · MSP T1', arr:'13:05+1 · LHR T3', dur:'約 8 小時', status:'confirmed', note:'Jesper 獨自飛往倫敦'},
+  '2026-09-02': {route:['LHR','MSP'], people:['jesper'], flightNo:'DL9', dep:'12:25 · LHR T3', arr:'15:25 · MSP T1', dur:'約 9 小時', status:'confirmed', note:'Jesper 從倫敦飛回明尼蘇達'},
+  '2026-09-11': {route:['LHR','MSP'], people:['vivi'], flightNo:'DL9（推測）', dep:'約 12:25 · LHR T3', arr:'約 15:10 · MSP T1', dur:'約 9 小時', status:'estimated', note:'Vivi 飛來明尼蘇達，與 Jesper 團聚'},
+  '2026-09-29': {route:['MSP','LHR'], people:['jesper','vivi'], flightNo:'DL10', dep:'23:10 · MSP T1', arr:'13:05+1 · LHR T3', dur:'約 7 小時 55 分', status:'confirmed', note:'兩人一起飛往倫敦'},
+};
+
+const jesperSeg = [
+  ['2026-08-22','2026-08-22','us'],
+  ['2026-08-23','2026-09-01','uk'],
+  ['2026-09-02','2026-09-29','us'],
+  ['2026-09-30','2026-09-30','uk'],
+];
+const viviSeg = [
+  ['2026-08-22','2026-09-10','uk'],
+  ['2026-09-11','2026-09-29','us'],
+  ['2026-09-30','2026-09-30','uk'],
+];
+function locationFor(segs, dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  for (const [s,e,loc] of segs){
+    if (d >= new Date(s+'T00:00:00') && d <= new Date(e+'T00:00:00')) return loc;
+  }
+  return null;
+}
+function pad(n){return n<10 ? '0'+n : ''+n;}
+
+function renderMonth(year, monthIndex, gridId){
+  const grid = document.getElementById(gridId);
+  const firstDay = new Date(year, monthIndex, 1).getDay();
+  const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+  let html = '';
+  for(let i=0;i<firstDay;i++){ html += '<div class="day pad"></div>'; }
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = year+'-'+pad(monthIndex+1)+'-'+pad(day);
+    const flight = flights[dateStr];
+    const jLoc = locationFor(jesperSeg, dateStr);
+    const vLoc = locationFor(viviSeg, dateStr);
+    const isToday = dateStr === '2026-08-15';
+    let avatarsHtml = '';
+    if (flight){
+      flight.people.forEach(p=>{
+        avatarsHtml += p==='jesper' ? jesperIcon('jesper-icon') : viviIcon('vivi-icon');
+      });
+    }
+    let barsHtml = '';
+    if (jLoc) barsHtml += '<div class="bar jesper'+(jLoc==='uk'?' abroad':'')+'"></div>';
+    if (vLoc) barsHtml += '<div class="bar vivi'+(vLoc==='uk'?' abroad':'')+'"></div>';
+    html += '<div class="day'+(flight?' flight':'')+(isToday?' today':'')+'" data-date="'+dateStr+'">'
+          + '<span class="num">'+day+'</span>'
+          + (avatarsHtml?'<div class="avatars">'+avatarsHtml+'</div>':'')
+          + '<div class="bars">'+barsHtml+'</div>'
+          + '</div>';
+  }
+  grid.innerHTML = html;
+}
+renderMonth(2026,7,'grid-aug');
+renderMonth(2026,8,'grid-sep');
+
+const nameMap = {jesper:'Jesper', vivi:'Vivi'};
+function openDetail(dateStr){
+  const f = flights[dateStr];
+  if(!f) return;
+  document.querySelectorAll('.day.active').forEach(d=>d.classList.remove('active'));
+  document.querySelector('.day[data-date="'+dateStr+'"]').classList.add('active');
+
+  document.getElementById('detail-route').innerHTML = f.route[0]+'<span class="sep">→</span>'+f.route[1];
+  document.getElementById('detail-tag').innerHTML = '<span class="detail-tag '+f.status+'">'+(f.status==='confirmed'?'已確認':'推算')+'</span>';
+  document.getElementById('detail-people').innerHTML = f.people.map(p=>{
+    const icon = p==='jesper' ? jesperIcon() : viviIcon();
+    return '<span class="avatar">'+icon+'</span><span style="font-size:13px">'+nameMap[p]+'</span>';
+  }).join('<span style="width:8px"></span>');
+  document.getElementById('detail-grid').innerHTML =
+    '<div><label>日期</label><span>'+dateStr+'</span></div>'+
+    '<div><label>班機</label><span>'+f.flightNo+'</span></div>'+
+    '<div><label>起飛</label><span>'+f.dep+'</span></div>'+
+    '<div><label>抵達</label><span>'+f.arr+'</span></div>'+
+    '<div><label>飛行時間</label><span>'+f.dur+'</span></div>';
+  document.getElementById('detail-note').textContent = f.note;
+  const panel = document.getElementById('detail');
+  panel.classList.add('open');
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+document.querySelectorAll('.grid').forEach(g=>{
+  g.addEventListener('click', e=>{
+    const cell = e.target.closest('.day.flight');
+    if(cell) openDetail(cell.dataset.date);
+  });
+});
+document.getElementById('detail-close').addEventListener('click', ()=>{
+  document.getElementById('detail').classList.remove('open');
+  document.querySelectorAll('.day.active').forEach(d=>d.classList.remove('active'));
+});
+
+let filterState = null;
+function applyFilter(){
+  document.body.classList.remove('filter-jesper','filter-vivi');
+  if(filterState) document.body.classList.add('filter-'+filterState);
+  document.getElementById('toggle-jesper').setAttribute('aria-pressed', filterState==='vivi' ? 'false':'true');
+  document.getElementById('toggle-vivi').setAttribute('aria-pressed', filterState==='jesper' ? 'false':'true');
+}
+document.getElementById('toggle-jesper').addEventListener('click', ()=>{
+  filterState = filterState==='jesper' ? null : 'jesper';
+  applyFilter();
+});
+document.getElementById('toggle-vivi').addEventListener('click', ()=>{
+  filterState = filterState==='vivi' ? null : 'vivi';
+  applyFilter();
+});
+</script>
+</body>
+</html>
